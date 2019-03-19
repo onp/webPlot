@@ -11,6 +11,9 @@ class Handler(BaseHTTPRequestHandler):
         if (self.path == '/parallel'):
             f = open('parallel.html', 'rb')
             mimetype = 'text/html'
+        if (self.path == '/t'):
+            f = open('test2.html', 'rb')
+            mimetype = 'text/html'
         if (self.path == '/parallel_style.css'):
             f = open('parallel_style.css', 'rb')
             mimetype = 'text/css'

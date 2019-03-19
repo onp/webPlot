@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <link type="text/css" rel="stylesheet" href="parallel_style.css"/>
+    <style type="text/css">
+
+svg {
+  font-size: 14px;
+}
+
+.foreground path {
+  fill: none;
+  stroke-opacity: .5;
+  stroke-width: 1.5px;
+}
+
+.foreground path.fade {
+  stroke: #000;
+  stroke-opacity: .05;
+}
+
+.legend {
+  font-size: 18px;
+  font-style: oblique;
+}
+
+.legend line {
+  stroke-width: 2px;
+}
+
+.setosa {
+  stroke: #800;
+}
+
+.versicolor {
+  stroke: #080;
+}
+
+.virginica {
+  stroke: #008;
+}
+
+.brush .extent {
+  fill-opacity: .3;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
+.axis line, .axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+
+.axis text {
+  text-shadow: 0 1px 0 #fff;
+  cursor: move;
+}
+
+    </style>
+  </head>
+  <body>
+    <h2>
+      Edgar Anderson’s <i>Iris</i> data set<br>
+      parallel coordinates
+    </h2>
+    <script type="text/javascript" src="d3/d3.js"></script>
+
+    <script type="text/javascript">
+
+var m = [80, 160, 200, 160],
+    w = 1280 - m[1] - m[3],
+    h = 800 - m[0] - m[2];
+
+var xrange = [0, w/3, 2*w/3, w]
+
+
+var line = d3.line(),
+    axis = d3.axisLeft(),
+    foreground;
+
+var svg = d3.select("body").append("svg:svg")
+    .attr("width", w + m[1] + m[3])
+    .attr("height", h + m[0] + m[2])
+  .append("svg:g")
+    .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+d3.csv("data/iris.csv").then(function(d) {
+
+    console.log(d)
+
+});
+
+
+
+
+    </script>
+  </body>
+</html>
