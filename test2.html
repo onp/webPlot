@@ -74,7 +74,7 @@ var m = [80, 160, 200, 160],
     w = 1280 - m[1] - m[3],
     h = 800 - m[0] - m[2];
 
-var xrange = [0, w/3, 2*w/3, w]
+var xrange = [0, w/4, 2*w/4, 3*w/4,w]
 
 
 var line = d3.line(),
@@ -89,9 +89,27 @@ var svg = d3.select("body").append("svg:svg")
 
 d3.csv("data/iris.csv", d3.autoType).then(function(d) {
 
-    var traits = d.columns.filter(function(d){return d != 'species'})
+    var traits = d.columns;
+
+    var traitTypes = traits.map(function(t){
+      if (typeof(d[0][t]) === 'string'){
+        return 'string'
+      } else if (typeof(d[0][t]) === 'number') {
+        return 'number'
+      } else if (d[0][t].constructor.name === 'date'){
+        return 'date'
+      } else {
+        return 'ignore'
+      }
+    });
+
     var species = d3.map(d, function(f){return f.species}).keys()
+
+    console.log(traits)
+    console.log(traitTypes)
     console.log(species)
+
+
 
     var x = d3.scaleOrdinal().domain(traits).range(xrange),
         y = {};
@@ -114,10 +132,16 @@ d3.csv("data/iris.csv", d3.autoType).then(function(d) {
     }
 
     // Create a scale and brush for each trait.
-    traits.forEach(function(trait) {
-      y[trait] = d3.scaleLinear()
-          .domain(d3.extent(d, function(p) { return p[trait]; }))
-          .range([h, 0]);
+    traits.forEach(function(trait, i) {
+      if (traitTypes[i] === 'number') {
+        y[trait] = d3.scaleLinear()
+            .domain(d3.extent(d, function(p) { return p[trait]; }))
+            .range([h, 0]);
+      } else if (traitTypes[i] === 'string') {
+        y[trait] = d3.scaleOrdinal()
+            .domain(d3.map(d, function(f){return f[trait]}).keys())
+            .range([h, h/2, 0]);
+      }
 
       y[trait].brush = d3.brushY()
           .extent([[-10,0],[10,h]])
