@@ -156,7 +156,7 @@ d3.csv("data/td1.csv", d3.autoType).then(function(d) {
             .domain(traitValues)
             .range(traitValues.map(function(v,i,a) {return h*i/(a.length-1)}));
       } else if (traitTypes[i] === 'date') {
-        y[trait] = d3.scaleLinear()
+        y[trait] = d3.scaleTime()
             .domain(d3.extent(d, function(p) { return p[trait]; }))
             .range([h, 0]);
       } else {
