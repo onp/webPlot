@@ -29,18 +29,6 @@ svg {
   stroke-width: 2px;
 }
 
-.setosa {
-  stroke: #800;
-}
-
-.versicolor {
-  stroke: #080;
-}
-
-.virginica {
-  stroke: #008;
-}
-
 .brush .extent {
   fill-opacity: .3;
   stroke: #fff;
@@ -74,7 +62,7 @@ var m = [80, 160, 200, 160],
     w = 1280 - m[1] - m[3],
     h = 800 - m[0] - m[2];
 
-var xrange = [0, w/4, 2*w/4, 3*w/4,w]
+var xrange = [0, w/4, 2*w/4, 3*w/4, w]  //TODO: make adaptive for any number of traits. Currently locked to 5.
 
 
 var line = d3.line(),
@@ -87,46 +75,71 @@ var svg = d3.select("body").append("svg:svg")
   .append("svg:g")
     .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-d3.csv("data/iris.csv", d3.autoType).then(function(d) {
+d3.csv("data/td1.csv", d3.autoType).then(function(d) {
 
     var traits = d.columns;
+
+    var brushClearTimeout;
+
+    function setBrushClearTimeout () {
+      brushClearTimeout = true;
+      setTimeout(function(){brushClearTimeout = null}, 350)
+    }
 
     var traitTypes = traits.map(function(t){
       if (typeof(d[0][t]) === 'string'){
         return 'string'
       } else if (typeof(d[0][t]) === 'number') {
         return 'number'
-      } else if (d[0][t].constructor.name === 'date'){
+      } else if (d[0][t].constructor.name === 'Date'){
         return 'date'
       } else {
+        console.log(d[0][t].constructor.name)
         return 'ignore'
       }
     });
 
-    var species = d3.map(d, function(f){return f.species}).keys()
-
     console.log(traits)
     console.log(traitTypes)
-    console.log(species)
 
 
+    xrange = traits.map(function(v,i,a){return w*i/(a.length-1)})
 
-    var x = d3.scaleOrdinal().domain(traits).range(xrange),
-        y = {};
+    var x = d3.scaleOrdinal().domain(traits).range(xrange);
+    var y = {};
+
+    if (traitTypes[0] === 'string'){
+      var primeAxisVals = d3.map(d, function(v){return v[traits[0]]}).keys()
+      var lColor = d3.scaleOrdinal()
+                     .domain(primeAxisVals)
+                     .range(d3.schemeCategory10);
+    } else if (traitTypes[0] === 'number') {
+      var primeAxisVals = d3.extent(d, function(v) { return v[traits[0]]; })
+      var lColor = d3.scaleSequential()
+                     .domain(primeAxisVals)
+                     .interpolator(d3.interpolateWarm);
+    } else if (traitTypes[0] === 'date') {
+      var primeAxisVals = d3.extent(d, function(v) { return v[traits[0]]; })
+      var lColor = d3.scaleSequential()
+                     .domain(primeAxisVals)
+                     .interpolator(d3.interpolateWarm);
+    }
+
+    console.log(primeAxisVals)
 
     // Returns the path for a given data point.
     function path(d) {
-      return line(traits.map(function(p) { return [x(p), y[p](d[p])]; }));
+      return line(traits.map(function(trait) { return [x(trait), y[trait](d[trait])]; }));
     }
 
     // Handles a brush event, toggling the display of foreground lines.
     function brush() {
-      var actives = traits.filter(function(p) {
-        return !!d3.brushSelection(y[p].brushNode); }),
-          extents = actives.map(function(p) { return d3.brushSelection(y[p].brushNode); });
+      var actives = traits.filter(function(trait) {
+        return !!d3.brushSelection(y[trait].brushNode); })
+      var extents = actives.map(function(trait) { return d3.brushSelection(y[trait].brushNode); });
       foreground.classed("fade", function(d) {
-        return !actives.every(function(p, i) {
-          return extents[i][0] <= y[p](d[p]) && y[p](d[p]) <= extents[i][1];
+        return !actives.every(function(trait, i) {
+          return (extents[i][0] <= y[trait](d[trait])) && (y[trait](d[trait]) <= extents[i][1]);
         });
       });
     }
@@ -138,19 +151,36 @@ d3.csv("data/iris.csv", d3.autoType).then(function(d) {
             .domain(d3.extent(d, function(p) { return p[trait]; }))
             .range([h, 0]);
       } else if (traitTypes[i] === 'string') {
+        var traitValues = d3.map(d, function(f){return f[trait]}).keys()
         y[trait] = d3.scaleOrdinal()
-            .domain(d3.map(d, function(f){return f[trait]}).keys())
-            .range([h, h/2, 0]);
+            .domain(traitValues)
+            .range(traitValues.map(function(v,i,a) {return h*i/(a.length-1)}));
+      } else if (traitTypes[i] === 'date') {
+        y[trait] = d3.scaleLinear()
+            .domain(d3.extent(d, function(p) { return p[trait]; }))
+            .range([h, 0]);
+      } else {
+        console.log(traitTypes[i])
       }
 
       y[trait].brush = d3.brushY()
           .extent([[-10,0],[10,h]])
-          .on("brush", brush);
+          .on("brush", brush)
+          .on("end", function(d,i,n){
+              if (!brushClearTimeout){
+                setBrushClearTimeout()
+              } else {
+                brushClearTimeout = null;
+                d3.select(this).call(d3.event.target.move, null);
+              };
+            });
+
    });
 
    // Add a legend.
+   // TODO: fix legend now that it's using color scale instead of css classes
    var legend = svg.selectAll("g.legend")
-       .data(species)
+       .data(primeAxisVals)
      .enter().append("svg:g")
        .attr("class", "legend")
        .attr("transform", function(d, i) { return "translate(0," + (i * 20 + 584) + ")"; });
@@ -164,17 +194,17 @@ d3.csv("data/iris.csv", d3.autoType).then(function(d) {
            .attr("dy", ".31em")
            .text(function(d) { return "Iris " + d; });
 
-       // Add foreground lines.
-       foreground = svg.append("svg:g")
+     // Add foreground lines.
+     foreground = svg.append("svg:g")
            .attr("class", "foreground")
          .selectAll("path")
            .data(d)
          .enter().append("svg:path")
            .attr("d", path)
-           .attr("class", function(d) { return d.species; });
+           .attr("stroke", function(d) { return lColor(d[traits[0]]); });
 
-       // Add a group element for each trait.
-       var g = svg.selectAll(".trait")
+    // Add a group element for each trait.
+    var g = svg.selectAll(".trait")
            .data(traits)
          .enter().append("svg:g")
            .attr("class", "trait")
@@ -185,9 +215,43 @@ d3.csv("data/iris.csv", d3.autoType).then(function(d) {
            .on("drag", drag)
            .on("end", dragend));
 
+         // Add an axis and title.
+         g.append("svg:g")
+             .attr("class", "axis")
+             .each(function(d) { d3.select(this).call(axis.scale(y[d])); });
 
+         g.append("svg:text")
+             .attr("text-anchor", "middle")
+             .attr("y", -9)
+             .text(String);
 
-    d.forEach(function(m){console.log(m)})
+         // Add a brush for each axis.
+         g.append("svg:g")
+             .attr("class", "brush")
+             .each(function(d) { y[d].brushNode = d3.select(this).call(y[d].brush).node(); })
+           .selectAll("rect")
+             .attr("x", -8)
+             .attr("width", 16);
+
+         function dragstart(d) {
+           i = traits.indexOf(d);
+         }
+
+         function drag(d) {
+           var newRange = xrange.slice()
+           newRange[i] = d3.event.x
+           x.range(newRange);
+           traits.sort(function(a, b) { return x(a) - x(b); });
+           g.attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+           foreground.attr("d", path);
+         }
+
+         function dragend(d) {
+           x.domain(traits).range(traits.map(function(v,i,a){return w*i/(a.length-1)}));
+           var t = d3.transition().duration(500);
+           t.selectAll(".trait").attr("transform", function(d) { return "translate(" + x(d) + ")"; });
+           t.selectAll(".foreground path").attr("d", path);
+         }
 
 });
 
