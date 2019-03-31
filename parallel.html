@@ -85,7 +85,7 @@ svg {
 
 var m = [80, 160, 100, 160],
     w = window.innerWidth - m[1] - m[3],
-    h = 800 - m[0] - m[2];
+    h = window.innerHeight - 150 - m[0] - m[2];
 
 var xrange = [0, w/4, 2*w/4, 3*w/4, w]  //TODO: make adaptive for any number of traits. Currently locked to 5.
 
@@ -194,6 +194,7 @@ function parallel_plot (d) {
             .range([h, 0]);
       } else if (traitTypes[i] === 'string') {
         var traitValues = d3.map(d, function(f){return f[trait]}).keys()
+        if (traitValues.length === 1){traitValues = ['', traitValues[0],'']}
         y[trait] = d3.scaleOrdinal()
             .domain(traitValues)
             .range(traitValues.map(function(v,i,a) {return h*i/(a.length-1)}));
