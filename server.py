@@ -8,11 +8,8 @@ class Handler(BaseHTTPRequestHandler):
         if (self.path == '/'):
             f = open('index.html', 'rb')
             mimetype = 'text/html'
-        if (self.path == '/parallel'):
+        if (self.path == '/parallel') or (self.path == '/p'):
             f = open('parallel.html', 'rb')
-            mimetype = 'text/html'
-        if (self.path == '/t'):
-            f = open('test2.html', 'rb')
             mimetype = 'text/html'
         if (self.path == '/parallel_style.css'):
             f = open('parallel_style.css', 'rb')
