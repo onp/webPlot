@@ -78,7 +78,7 @@ svg {
     </h2>
     <input type='file' class='data-file'>
 
-    <script type="text/javascript" src="d3/d3.js"></script>
+    <script type="text/javascript" src="js/d3.js"></script>
 
     <script type="text/javascript">
 
@@ -110,7 +110,7 @@ var df = d3.select('.data-file')
             })
 
 // Load default data
-d3.csv("data/td1.csv", d3.autoType).then(parallel_plot)
+d3.csv("datafiles/td1.csv", d3.autoType).then(parallel_plot)
 
 function parallel_plot (d) {
     svg_c.selectAll('*').remove()

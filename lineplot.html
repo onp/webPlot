@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <style type="text/css">
+
+body {
+  font: 300 36px "Helvetica Neue";
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+
+}
+
+blockquote:before {
+  content: "“";
+  position: absolute;
+  left: -.4em;
+}
+
+blockquote:after {
+  content: "”";
+  position: absolute;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+svg {
+  font-size: 14px;
+}
+
+.foreground path {
+  fill: none;
+  stroke-opacity: .5;
+  stroke-width: 1.5px;
+}
+
+.foreground path.fade {
+  stroke: #000;
+  stroke-opacity: .05;
+}
+
+.legend {
+  font-size: 18px;
+  font-style: oblique;
+}
+
+.legend line {
+  stroke-width: 2px;
+}
+
+.brush .extent {
+  fill-opacity: .3;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
+.axis line, .axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+
+.axis text {
+  text-shadow: 0 1px 0 #fff;
+  cursor: move;
+}
+
+    </style>
+  </head>
+  <body>
+    <svg></svg>
+    <h2>
+      Parallel coordinate analysis
+    </h2>
+    <input type='file' class='data-file'>
+
+    <script type="text/javascript" src="js/d3.js"></script>
+
+    <script type="text/javascript">
+
+var m = [80, 160, 100, 160],
+    w = window.innerWidth - m[1] - m[3],
+    h = window.innerHeight - m[0] - m[2];
+
+var xrange = [];
+
+var svg_c = d3.select("svg")
+    .attr("width", w + m[1] + m[3])
+    .attr("height", h + m[0] + m[2])
+
+var df = d3.select('.data-file')
+            .on('input', function(){
+              var file = this.files[0];
+              var reader = new FileReader();
+              reader.onload = function(e){
+                console.log('loaded')
+                parallel_plot(d3.csvParse(e.target.result, d3.autoType))
+              };
+              reader.readAsText(file);
+              console.log('inpt')
+            })
+
+// Load default data
+d3.csv("datafiles/td1.csv", d3.autoType).then(line_plot)
+
+function line_plot (d) {
+    console.log(d)
+
+    svg_c.selectAll('*').remove()
+
+    var svg = svg_c.append("svg:g")
+        .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+    var traits = d3.keys(d[0]).slice(1);
+
+    var traitTypes = traits.map(function(t){
+      if (typeof(d[0][t]) === 'string'){
+        return 'string'
+      } else if (typeof(d[0][t]) === 'number') {
+        return 'number'
+      } else if (d[0][t].constructor.name === 'Date'){
+        return 'date'
+      } else {
+        console.log(d[0][t].constructor.name)
+        return 'ignore'
+      }
+    });
+
+    console.log(traits)
+    console.log(traitTypes)
+
+    yrange = traits.map(function(v,i,a){return h*i/(a.length-1)})
+
+    var x = d3.scaleTime()
+                   .domain(d3.extent(d, b => b.date))
+                   .range([0, w-150]);
+
+    var y = d3.scaleOrdinal().domain(traits).range(yrange)
+    var c = {};
+
+    // Create a colorscale for each trait.
+    traits.forEach(function(trait, i) {
+      if (traitTypes[i] === 'number') {
+        c[trait] = d3.scaleSequential()
+            .domain(d3.extent(d, function(p) { return p[trait]; }))
+            .interpolator(d3.interpolateWarm);
+      } else if (traitTypes[i] === 'string') {
+        var traitValues = d3.map(d, function(p){return p[trait]}).keys()
+        if (traitValues.length === 1){traitValues = ['', traitValues[0],'']}
+        c[trait] = d3.scaleOrdinal()
+            .domain(traitValues)
+            .range(d3.schemeCategory10);
+      } else if (traitTypes[i] === 'date') {
+        c[trait] = d3.scaleSequential()
+            .domain(d3.extent(d, function(p) { return p[trait]; }))
+            .interpolator(d3.interpolateWarm);
+      } else {
+        console.log(traitTypes[i])
+      }
+    });
+
+    console.log(y.domain())
+
+  // Returns the path for a given trait.
+  var line = d3.line()
+              .x(function(d){return x(d.idx)})
+              .y(function(d){return y(d.trait)})
+
+  var d2 = traits.map(function(t){
+    return d.map(function(b) {return{'idx': b.date, 'val': b[t], 'trait': t}} )
+  });
+
+  console.log('d2')
+  console.log(d2)
+
+   // Add foreground lines.
+   foreground = svg.append("svg:g")
+         .attr("class", "foreground")
+       .selectAll("path")
+         .data(d2)
+       .enter().append("svg:path")
+         .attr("d", line)
+         .attr("stroke", 'black');
+
+};
+
+
+
+
+    </script>
+  </body>
+</html>

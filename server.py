@@ -11,13 +11,16 @@ class Handler(BaseHTTPRequestHandler):
         if (self.path == '/parallel') or (self.path == '/p'):
             f = open('parallel.html', 'rb')
             mimetype = 'text/html'
+        if (self.path == '/lineplot') or (self.path == '/l'):
+            f = open('lineplot.html', 'rb')
+            mimetype = 'text/html'
         if (self.path == '/parallel_style.css'):
             f = open('parallel_style.css', 'rb')
             mimetype = 'text/css'
-        if (self.path == '/d3/d3.js'):
-            f = open('d3/d3.js', 'rb')
+        if (self.path == '/js/d3.js'):
+            f = open('js/d3.js', 'rb')
             mimetype = 'application/javascript'
-        if (self.path == '/data/td1.csv'):
+        if (self.path == '/datafiles/td1.csv'):
             f = open('data/td1.csv', 'rb')
             mimetype = 'text/csv'
         if (self.path == '/data/iris.csv'):
