@@ -79,6 +79,7 @@ svg {
     <h2>
       Lineplot
     </h2>
+    <div id=legend></div>
     <input type='file' class='data-file'>
 
     <script type="text/javascript" src="js/d3.js"></script>
@@ -225,7 +226,12 @@ function make_plot (data) {
    svg.append("g")
        .attr("class", "axis")
        .attr("transform", "translate(0," + h + ")")
-       .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b %d")));
+       .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b %d")))
+       .attr("transform", "translate(0," + y(0) + ")");
+
+   var legend = d3.select('#legend')
+                  .append("p")
+                  .text('legend data')
 
 };
 
